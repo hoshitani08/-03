@@ -90,92 +90,13 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input, Audio* audio)
 
 void GameScene::Update()
 {
-	//キーが押されているときの処理
-	if (input->TriggerPadRight())
-	{
-		OutputDebugStringA("Hit 0\n");
-	}
+	//playerの処理ここから下
 
-	////X座標、Y座標を指定して表示
-	//debugText.Print("Hello,DirectX!!", 200, 100, 1.0f);
-	////X座標、Y座標、縮尺を指定して表示
-	//debugText.Print("Nihon Kogakuin", 200, 200, 2.0f);
+	//ステージの処理ここから下
 
-	// オブジェクト移動
-	//if (input->PushPadStickUp() || input->PushPadStickDown() || input->PushPadStickRight() || input->PushPadStickLeft())
-	//{
-	//	// 現在の座標を取得
-	//	XMFLOAT3 position = object3d->GetPosition();
-	//
-	//	// 移動後の座標を計算
-	//	if (input->PushPadStickUp())
-	//	{
-	//		position.y += 1.0f;
-	//	}
-	//	else if (input->PushPadStickDown())
-	//	{
-	//		position.y -= 1.0f;
-	//	}
-	//
-	//	if (input->PushPadStickRight())
-	//	{
-	//		position.x += 1.0f;
-	//	}
-	//	else if (input->PushPadStickLeft())
-	//	{
-	//		position.x -= 1.0f;
-	//	}
-	//
-	//	// 座標の変更を反映
-	//	object3d->SetPosition(position);
-	//}
-
-	XMFLOAT3 rot = object3d->GetRotation();
-	rot.y += 1.0f;
-	object3d->SetRotation(rot);
-
-	// カメラ移動
-	if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
-	{
-		if (input->PushKey(DIK_W))
-		{
-			camera->CameraMoveEyeVector({ 0.0f,+1.0f,0.0f });
-		}
-		else if (input->PushKey(DIK_S))
-		{
-			camera->CameraMoveEyeVector({ 0.0f,-1.0f,0.0f });
-		}
-		
-		if (input->PushKey(DIK_D))
-		{
-			camera->CameraMoveEyeVector({ +1.0f,0.0f,0.0f });
-		}
-		else if (input->PushKey(DIK_A))
-		{
-			camera->CameraMoveEyeVector({ -1.0f,0.0f,0.0f });
-		}
-	}
-
-	if (input->PushPadStickUp())
-	{
-		debugText.Print("Up", 200, 100, 1.0f);
-	}
-	else if (input->PushPadStickDown())
-	{
-		debugText.Print("Down", 200, 100, 1.0f);
-	}
-
-	if (input->PushPadStickRight())
-	{
-		debugText.Print("Right", 240, 100, 1.0f);
-	}
-	else if (input->PushPadStickLeft())
-	{
-		debugText.Print("Left", 240, 100, 1.0f);
-	}
-
-	particleEmitter->Add();
-
+	//カメラの処理ここから下
+	
+	//アップデートここから下
 	object3d->Update();
 	particleEmitter->Update();
 	camera->Update();
