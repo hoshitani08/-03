@@ -55,7 +55,10 @@ GameScene::GameScene()
 
 GameScene::~GameScene()
 {
-	safe_delete(sprite);
+	for (int i = 0; i < _countof(sprite); i++)
+	{
+		safe_delete(sprite[i]);
+	}
 	for (int i = 0; i < _countof(object3d); i++)
 	{
 		safe_delete(object3d[i]);
@@ -97,15 +100,32 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input, Audio* audio)
 	{
 		assert(0);
 	}
+	// テクスチャ読み込み
+	if (!Sprite::LoadTexture(2, L"Resources/icon1.png"))
+	{
+		assert(0);
+	}
+	// テクスチャ読み込み
+	if (!Sprite::LoadTexture(3, L"Resources/icon2.png"))
+	{
+		assert(0);
+	}
 
 	//マップ読み込み
 	std::vector<std::vector<int>> map;
 	CsvToVector(map, "Resource/Draw/なんたら.csv");//mapNum=0
 
+	sprite[0] = Sprite::Create(1, { 0.0f,0.0f });
+	sprite[1] = Sprite::Create(2, { 0.0f,0.0f });
+	sprite[2] = Sprite::Create(3, { 0.0f,0.0f });
+	sprite[0]->SetSize({ 1280.0f,720.0f });
+	sprite[1]->SetSize({ 128.0f,128.0f });
+	sprite[2]->SetSize({ 128.0f,128.0f });
 	// 背景スプライト生成
-	sprite = Sprite::Create(1, { 0.0f,0.0f });
-	sprite->SetSize({ 1280.0f,720.0f });
-	sprite->SetPosition({ 0.0f,0.0f });
+	for (int i = 0; i < _countof(sprite); i++)
+	{
+		sprite[i]->SetPosition({ 0.0f,0.0f });
+	}
 
 	//.objの名前を指定してモデルを読み込む
 	modelFighter = Model::CreateFromObject("sphere", true);
@@ -113,7 +133,7 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input, Audio* audio)
 	//scaleの初期値の代入
 	for (int i = 0; i < 50; i++)
 	{
-		objectSize[i] = { 3,3,3 };
+		block[i].Size = { 3,3,3 };
 	}
 
 	for (int i = 0; i < _countof(object3d); i++)
@@ -131,6 +151,7 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input, Audio* audio)
 		}
 		object3d[i]->SetScale({ 3, 3, 3 });
 		object3d[i]->SetColor({ 1, 1, 1 ,1 });
+		object3d[i]->SetRotation({ 0,0,0 });
 		if (i < 15)
 		{
 			object3d[i]->SetPosition({ -10 + ((float)i * 3),2,0 });
@@ -143,6 +164,7 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input, Audio* audio)
 		{
 			object3d[i]->SetPosition({ 10 + ((float)i * 3),2,0 });
 		}
+		block[i].Pos = object3d[i]->GetPosition();
 	}
 
 	// パーティクルマネージャ生成
@@ -204,10 +226,17 @@ void GameScene::Update()
 			}
 			// 座標の変更を反映
 			object3d[0]->SetPosition(playerPos);
+			cameraPos = object3d[0]->GetPosition();
+
+			camera->SetEye({ cameraPos.x, cameraPos.y , -50 });
+			camera->SetTarget({ cameraPos.x , cameraPos.y , 0 });
+			camera->Update();
 		}
 		if (input->PushKey(DIK_RETURN))
 		{
 			phase = Trimming;
+			camera->SetEye({ cameraPos.x, cameraPos.y , -60 });
+			camera->Update();
 		}
 	}
 	//ステージの処理ここから下
@@ -217,19 +246,29 @@ void GameScene::Update()
 		{
 			if (input->PushKey(DIK_1))
 			{
+				//ブロックのサイズ変更
 				process = Size;
 			}
-			if (input->PushKey(DIK_2))
+			else if (input->PushKey(DIK_2))
 			{
+				//コピペ
 				process = Cut;
 			}
-			if (input->PushKey(DIK_3))
+			else if (input->PushKey(DIK_3))
 			{
+				//ブロックの回転
 				process = Rota;
 			}
-			if (input->PushKey(DIK_4))
+			else if (input->PushKey(DIK_4))
 			{
+				//彩度、明度の変更
 				process = Color;
+			}
+			else if (input->PushKey(DIK_BACK))
+			{
+				phase = Move;
+				camera->SetEye({ cameraPos.x, cameraPos.y , -50 });
+				camera->Update();
 			}
 		}
 		//process1 床のサイズ変更
@@ -240,33 +279,74 @@ void GameScene::Update()
 			//オブジェクトのサイズ変更
 			if (input->PushKey(DIK_UP))
 			{
-				objectSize[selectBlock].x += 1;
-				objectSize[selectBlock].y += 1;
+				block[selectBlock].Size.x += 1;
+				block[selectBlock].Size.y += 1;
 			}
-			if (input->PushKey(DIK_DOWN))
+			else if (input->PushKey(DIK_DOWN))
 			{
-				objectSize[selectBlock].x -= 1;
-				objectSize[selectBlock].y -= 1;
+				block[selectBlock].Size.x -= 1;
+				block[selectBlock].Size.y -= 1;
 			}
 			//サイズ変更をするオブジェクト変更
-			if (input->PushKey(DIK_LEFT) && selectBlock > 1)
+			else if (input->PushKey(DIK_LEFT) && selectBlock > 1)
 			{
 				selectBlock -= 1;
 			}
-			if (input->PushKey(DIK_RIGHT))
+			else if (input->PushKey(DIK_RIGHT))
 			{
 				selectBlock += 1;
 			}
-			object3d[selectBlock]->SetScale({ objectSize[selectBlock] });
+			else if (input->PushKey(DIK_BACK))
+			{
+				process = None;
+			}
+			object3d[selectBlock]->SetScale({ block[selectBlock].Size });
+		}
+		//コピーペースト
+		if (process == Cut)
+		{
+			//オブジェクト
+			if (input->PushKey(DIK_UP))
+			{
+				block[selectBlock].Pos.y += 1;
+			}
+			else if (input->PushKey(DIK_DOWN))
+			{
+				block[selectBlock].Pos.y -= 1;
+			}
+			else if (input->PushKey(DIK_LEFT))
+			{
+				block[selectBlock].Pos.x -= 1;
+			}
+			else if (input->PushKey(DIK_RIGHT))
+			{
+				block[selectBlock].Pos.x += 1;
+			}
+			else if (input->PushKey(DIK_BACK))
+			{
+				process = None;
+			}
+			object3d[selectBlock]->SetPosition({ block[selectBlock].Pos });
+		}
+		if (process == Rota)
+		{
+			if (input->PushKey(DIK_LEFT))
+			{
+				block[selectBlock].Rotation.z -= 1;
+			}
+			else if (input->PushKey(DIK_RIGHT))
+			{
+				block[selectBlock].Rotation.z += 1;
+			}
+			else if (input->PushKey(DIK_BACK))
+			{
+				process = None;
+			}
+			object3d[selectBlock]->SetRotation({ block[selectBlock].Rotation });
 		}
 	}
 
 	//カメラの処理ここから下
-
-	cameraPos = object3d[0]->GetPosition();
-
-	camera->SetEye({ cameraPos.x, cameraPos.y , -50 });
-	camera->SetTarget({ cameraPos.x , cameraPos.y , 0 });
 	//アップデートここから下
 	for (int i = 0; i < _countof(object3d); i++)
 	{
@@ -282,15 +362,6 @@ void GameScene::Draw()
 	// コマンドリストの取得
 	ID3D12GraphicsCommandList* cmdList = dxCommon->GetCommandList();
 #pragma region 背景スプライト描画
-	// 背景スプライト描画前処理
-	Sprite::PreDraw(dxCommon->GetCommandList());
-	// 背景スプライト描画
-	if (phase == Trimming)
-	{
-		sprite->Draw();
-	}
-	// スプライト描画後処理
-	Sprite::PostDraw();
 	// 深度バッファクリア
 	dxCommon->ClearDepthBuffer();
 #pragma endregion 背景スプライト描画
@@ -304,6 +375,23 @@ void GameScene::Draw()
 	}
 	// 3Dオブジェクト描画後処理
 	Object3d::PostDraw();
+	// 背景スプライト描画前処理
+	Sprite::PreDraw(dxCommon->GetCommandList());
+	// 背景スプライト描画
+	if (phase == Trimming)
+	{
+		sprite[0]->Draw();
+		if (process == Size)
+		{
+			sprite[1]->Draw();
+		}
+		else if (process == Cut)
+		{
+			sprite[2]->Draw();
+		}
+	}
+	// スプライト描画後処理
+	Sprite::PostDraw();
 #pragma endregion 3Dオブジェクト描画
 #pragma region パーティクル
 	//particleEmitter->Draw(dxCommon->GetCommandList());
