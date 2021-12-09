@@ -46,7 +46,7 @@ void WinApp::CreateGameWindow()
 	);
 
 	// ウィンドウ表示
-	ShowWindow(hwnd, SW_SHOW);
+	ShowWindow(hwnd, SW_SHOWMAXIMIZED);
 }
 
 void WinApp::TerminateGameWindow()
