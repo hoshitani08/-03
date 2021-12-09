@@ -47,12 +47,25 @@ private: // メンバ変数
 	Input* input = nullptr;
 	Audio* audio = nullptr;
 	DebugText debugText;
-
+	XMFLOAT3 cameraPos = { 0,10,-50 };
+	XMFLOAT3 objectSize[50] = {};
+	enum Phase
+	{
+		Move, Trimming
+	};
+	enum Process
+	{
+		None, Size, Cut, Rota, Color
+	};
+	bool phase = Move;
+	int process = None;
+	int selectBlock = 1;
 	// ゲームシーン用
 	Sprite* sprite = nullptr;
 	//オブジェクト
 	Model* modelFighter = nullptr;
-	Object3d* object3d = nullptr;
+	Model* modelCube = nullptr;
+	Object3d* object3d[50] = {nullptr};
 	//パーティクル
 	ParticleManager* particleMan = nullptr;
 	ParticleEmitter* particleEmitter = nullptr;
