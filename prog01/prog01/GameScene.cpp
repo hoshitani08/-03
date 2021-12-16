@@ -110,17 +110,38 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input, Audio* audio)
 	{
 		assert(0);
 	}
+	// テクスチャ読み込み
+	if (!Sprite::LoadTexture(4, L"Resources/icon3.png"))
+	{
+		assert(0);
+	}
+	// テクスチャ読み込み
+	if (!Sprite::LoadTexture(5, L"Resources/icon4.png"))
+	{
+		assert(0);
+	}
+	// テクスチャ読み込み
+	if (!Sprite::LoadTexture(6, L"Resources/blackOut.png"))
+	{
+		assert(0);
+	}
 
 	//マップ読み込み
 	std::vector<std::vector<int>> map;
-	CsvToVector(map, "Resource/Draw/なんたら.csv");//mapNum=0
+	CsvToVector(map, "Resource/CSV/Level1_map.csv");//mapNum=0
 
 	sprite[0] = Sprite::Create(1, { 0.0f,0.0f });
 	sprite[1] = Sprite::Create(2, { 0.0f,0.0f });
 	sprite[2] = Sprite::Create(3, { 0.0f,0.0f });
-	sprite[0]->SetSize({ 1280.0f,720.0f });
+	sprite[3] = Sprite::Create(4, { 0.0f,0.0f });
+	sprite[4] = Sprite::Create(5, { 0.0f,0.0f });
+	sprite[5] = Sprite::Create(6, { 0.0f,0.0f });
+	sprite[0]->SetSize(SmartphoneSize);
 	sprite[1]->SetSize({ 128.0f,128.0f });
 	sprite[2]->SetSize({ 128.0f,128.0f });
+	sprite[3]->SetSize({ 128.0f,128.0f });
+	sprite[4]->SetSize({ 128.0f,128.0f });
+	sprite[5]->SetSize({ 1280.0f,720.0f });
 	// 背景スプライト生成
 	for (int i = 0; i < _countof(sprite); i++)
 	{
@@ -152,7 +173,11 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input, Audio* audio)
 		object3d[i]->SetScale({ 3, 3, 3 });
 		object3d[i]->SetColor({ 1, 1, 1 ,1 });
 		object3d[i]->SetRotation({ 0,0,0 });
-		if (i < 15)
+		if (i == 0)
+		{
+			object3d[i]->SetPosition({ -15 , 2 , 0 });
+		}
+		else if (i < 15)
 		{
 			object3d[i]->SetPosition({ -10 + ((float)i * 3),2,0 });
 		}
@@ -195,17 +220,20 @@ void GameScene::Update()
 	GetCursorPos(&mousePos);
 	if (phase == Move)
 	{
+		// 現在の座標を取得
+		XMFLOAT3 playerPos = object3d[0]->GetPosition();
+		XMFLOAT3 blockPos[9] = {};
+		for (int i = 0; i < 9; i++)
+		{
+			blockPos[i] = object3d[i + 1]->GetPosition();
+		}
 		//playerの処理ここから下
+		if (Collision::BlockCollision(playerPos.x, playerPos.y, block[1].Pos.x, block[1].Pos.y, 3, 3) == true)
+		{
+			phaseChange = true;
+		}
 		if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))
 		{
-			// 現在の座標を取得
-			XMFLOAT3 playerPos = object3d[0]->GetPosition();
-			XMFLOAT3 blockPos[9] = {};
-			for (int i = 0; i < 9; i++)
-			{
-				blockPos[i] = object3d[i + 1]->GetPosition();
-			}
-
 			// 移動後の座標を計算
 			if (input->PushKey(DIK_W))
 			{
@@ -224,19 +252,37 @@ void GameScene::Update()
 			{
 				playerPos.x -= 1.0f;
 			}
-			// 座標の変更を反映
-			object3d[0]->SetPosition(playerPos);
-			cameraPos = object3d[0]->GetPosition();
-
-			camera->SetEye({ cameraPos.x, cameraPos.y , -50 });
-			camera->SetTarget({ cameraPos.x , cameraPos.y , 0 });
-			camera->Update();
 		}
+		// 座標の変更を反映
+		object3d[0]->SetPosition(playerPos);
+		cameraPos = object3d[0]->GetPosition();
+		cameraPos.z = cameraPosZ;
+
+		camera->SetEye({ cameraPos.x, cameraPos.y , cameraPos.z });
+		camera->SetTarget({ cameraPos.x , cameraPos.y , 0 });
+		camera->Update();
 		if (input->PushKey(DIK_RETURN))
 		{
-			phase = Trimming;
-			camera->SetEye({ cameraPos.x, cameraPos.y , -60 });
+			phaseChange = true;
+
+		}
+		if (phaseChange == true)
+		{
+			int countNum = 100;
+			timeRate = nowCount / countNum;
+			nowCount++;
+			cameraPos.z = (Ease::easeInOut(cameraNormalZ, cameraUpZ, timeRate));
+			SmartphoneSize.x = (Ease::easeOut(SmartphoneMinSize.x, SmartphoneMaxSize.x, timeRate));
+			SmartphoneSize.y = (Ease::easeOut(SmartphoneMinSize.y, SmartphoneMaxSize.y, timeRate));
+			camera->SetEye({ cameraPos.x, cameraPos.y , cameraPos.z });
 			camera->Update();
+			sprite[0]->SetSize(SmartphoneSize);
+			if (nowCount > countNum)
+			{
+				nowCount = 0;
+				phase = Trimming;
+				phaseChange = false;
+			}
 		}
 	}
 	//ステージの処理ここから下
@@ -378,9 +424,12 @@ void GameScene::Draw()
 	// 背景スプライト描画前処理
 	Sprite::PreDraw(dxCommon->GetCommandList());
 	// 背景スプライト描画
-	if (phase == Trimming)
+	if (phaseChange == false)
 	{
 		sprite[0]->Draw();
+	}
+	if (phase == Trimming)
+	{
 		if (process == Size)
 		{
 			sprite[1]->Draw();
@@ -389,6 +438,18 @@ void GameScene::Draw()
 		{
 			sprite[2]->Draw();
 		}
+		else if (process == Rota)
+		{
+			sprite[3]->Draw();
+		}
+		else if (process == Color)
+		{
+			sprite[4]->Draw();
+		}
+	}
+	if (nowCount > 1 && nowCount < 20)
+	{
+		sprite[5]->Draw();
 	}
 	// スプライト描画後処理
 	Sprite::PostDraw();
