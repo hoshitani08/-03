@@ -14,6 +14,7 @@
 #include "CollisionPrimitive.h"
 #include "Camera.h"
 #include "Light.h"
+#include "Ease.h"
 
 class GameScene
 {
@@ -55,6 +56,9 @@ private: // メンバ変数
 	};
 	Block block[50];
 	XMFLOAT3 cameraPos = { 0,10,-50 };
+	float cameraPosZ = -50.0f;
+	const float cameraUpZ = -60.0f;
+	const float cameraNormalZ = -50.0f;
 	enum Phase
 	{
 		Move, Trimming
@@ -64,10 +68,17 @@ private: // メンバ変数
 		None, Size, Cut, Rota, Color
 	};
 	bool phase = Move;
+	bool phaseChange = false;
 	int process = None;
 	int selectBlock = 1;
+	//イージングの進行度用
+	float nowCount = 0.0f;
+	float timeRate = 0.0f;
 	// ゲームシーン用
-	Sprite* sprite[3] = { nullptr };
+	Sprite* sprite[6] = { nullptr };
+	XMFLOAT2 SmartphoneSize = { 128,72 };
+	const XMFLOAT2 SmartphoneMinSize = { 128,72 };
+	const XMFLOAT2 SmartphoneMaxSize = { 1280,720 };
 	//オブジェクト
 	Model* modelFighter = nullptr;
 	Model* modelCube = nullptr;

@@ -23,4 +23,7 @@ public:
 	//レイと球の当たり判定
 	static bool CheckRay2Sphere(const Ray& ray, const Sphere& sphere,
 		float* distance = nullptr, DirectX::XMVECTOR* inter = nullptr);
+	//マップチップ用(ブロック同士のあたり判定)
+	static bool BlockCollision(float playerX, float playerY, float blockX, float blockY, float playerSize, float blockSize);
+	//マップチップの当たり判定
 };

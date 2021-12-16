@@ -256,3 +256,18 @@ bool Collision::CheckRay2Sphere(const Ray& ray, const Sphere& sphere,
 
 	return true;
 }
+
+bool Collision::BlockCollision(float playerX, float playerY, float blockX, float blockY, float playerSize, float blockSize)
+{
+	if ((playerX - (playerSize / 2) < blockX + (blockSize / 2))
+		&& (playerX + (playerSize / 2) > blockX - (blockSize / 2))
+		&& (playerY - (playerSize / 2) < blockY + (blockSize / 2))
+		&& (playerY + (playerSize / 2) > blockY - (blockSize / 2)))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
